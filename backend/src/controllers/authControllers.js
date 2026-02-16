@@ -1,15 +1,25 @@
 import { StatusCodes } from 'http-status-codes';
-import User from '../models/userModel.js';
 import { genToken, hashPassword, comparePassword } from '../utils/authHelper.js';
+import { ExpressError } from '../utils/ExpressError.js';
+import User from '../models/userModel.js';
 
+// register
 const registerUser = async (req, res) => {
   const { fullName, email, password, mobileNumber, role } = req.body;
   const cleanedEmail = email.trim().toLowerCase();
   const cleanedFullName = fullName.trim();
+  const cleanedMobile = mobileNumber.trim();
   // check if email already exists
   const existingUser = await User.findOne({ email: cleanedEmail });
   if (existingUser) {
     throw new ExpressError(StatusCodes.CONFLICT, 'Email is already used, try different email!');
+  }
+  const existingMobile = await User.findOne({ mobileNumber: cleanedMobile });
+  if (existingMobile) {
+    throw new ExpressError(
+      StatusCodes.CONFLICT,
+      'Mobile number is already used, try different number!'
+    );
   }
 
   const hashedPassword = await hashPassword(password);
@@ -18,7 +28,7 @@ const registerUser = async (req, res) => {
     fullName: cleanedFullName,
     email: cleanedEmail,
     role,
-    mobileNumber,
+    mobileNumber: cleanedMobile,
     password: hashedPassword,
   });
 
@@ -42,6 +52,7 @@ const registerUser = async (req, res) => {
   });
 };
 
+// login
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -74,6 +85,7 @@ const loginUser = async (req, res) => {
   });
 };
 
+// logout
 const logoutUser = async (req, res) => {
   res.clearCookie('token');
   return res.status(StatusCodes.OK).json({ message: 'Logout successfull!' });
