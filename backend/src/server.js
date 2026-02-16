@@ -1,12 +1,6 @@
-import express from 'express';
-import cors from 'cors';
 import mongoose from 'mongoose';
 import Config from './config/index.js';
-
-const app = express();
-
-app.use(cors());
-app.use(express.json());
+import app from './app.js';
 
 // connect to MongoDB and start the server
 const start = async () => {
