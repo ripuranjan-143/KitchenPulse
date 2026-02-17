@@ -7,7 +7,13 @@ import { mainRouter } from './routes/mainRoutes.js';
 const app = express();
 
 // enable CORS so frontend can communicate with backend
-app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+    methods: ['POST', 'GET'],
+  })
+);
 
 // middleware to parse JSON request bodies
 app.use(express.json({ limit: '100kb' }));
