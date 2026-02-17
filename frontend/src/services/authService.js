@@ -6,4 +6,10 @@ const signupUser = async (user) => {
   return data;
 };
 
-export { signupUser };
+// Signin
+const signinUser = async (user) => {
+  const { data } = await axiosInstance.post('/auth/login', user, { withCredentials: true });
+  return data;
+};
+
+export { signupUser, signinUser };
