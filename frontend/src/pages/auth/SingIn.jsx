@@ -4,8 +4,10 @@ import { FcGoogle } from 'react-icons/fc';
 import { ClipLoader } from 'react-spinners';
 import { FaRegEye } from 'react-icons/fa';
 import { FaRegEyeSlash } from 'react-icons/fa';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import showToast from '../../utils/toastHelper';
-import { loginUserAPI } from '../../services/authService.js';
+import { loginUserAPI, googleAuthAPI } from '../../services/authService.js';
+import { auth } from '../../config/firebase.js';
 
 function SignIn() {
   const [email, setEmail] = useState('');
@@ -42,6 +44,21 @@ function SignIn() {
       console.log(data);
       setEmail('');
       setPassword('');
+    } catch (error) {
+      showToast(error, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleAuthentication = async (e) => {
+    try {
+      setLoading(true);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const data = await googleAuthAPI({ email: result.user.email });
+      showToast(data.message, 'success');
+      console.log(data);
     } catch (error) {
       showToast(error, 'error');
     } finally {
@@ -124,6 +141,7 @@ function SignIn() {
             </button>
           </form>
           <button
+            onClick={handleGoogleAuthentication}
             type="button"
             className="w-full mt-4 flex items-center justify-center gap-2 border rounded-lg px-4 py-2 transition cursor-pointer duration-200 border-gray-400 hover:bg-gray-100"
           >

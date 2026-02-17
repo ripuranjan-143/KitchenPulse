@@ -7,6 +7,7 @@ import {
   sendPasswordResetOtp,
   verifyPasswordResetOtp,
   resetUserPassword,
+  googleAuth,
 } from '../controllers/authControllers.js';
 import { validateSchema } from '../middlewares/validateSchema.js';
 import {
@@ -15,6 +16,7 @@ import {
   sendPasswordResetOtpSchema,
   verifyPasswordResetOtpSchema,
   resetUserPasswordSchema,
+  googleAuthSchema,
 } from '../schemas/authSchema.js';
 
 const authRouter = express.Router();
@@ -37,5 +39,6 @@ authRouter.post(
   validateSchema(resetUserPasswordSchema),
   wrapAsync(resetUserPassword)
 );
+authRouter.post('/google-auth', validateSchema(googleAuthSchema), wrapAsync(googleAuth));
 
 export { authRouter };

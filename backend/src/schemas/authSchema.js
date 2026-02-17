@@ -50,10 +50,21 @@ const resetUserPasswordSchema = Joi.object({
   }).required(),
 });
 
+// GOOGLE AUTH
+const googleAuthSchema = Joi.object({
+  body: Joi.object({
+    fullName: fullNameField.optional(),
+    email: emailField.required(),
+    mobileNumber: mobileField.optional(),
+    role: roleField.optional(),
+  }).required(),
+});
+
 export {
   registerSchema,
   loginSchema,
   sendPasswordResetOtpSchema,
   verifyPasswordResetOtpSchema,
   resetUserPasswordSchema,
+  googleAuthSchema,
 };

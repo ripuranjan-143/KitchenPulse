@@ -153,6 +153,71 @@ const resetUserPassword = async (req, res) => {
   return res.status(StatusCodes.OK).json({ message: 'Password reset successfully!' });
 };
 
+// google register
+const googleAuth = async (req, res) => {
+  const { fullName, email, mobileNumber, role } = req.body;
+  const cleanedEmail = email.trim().toLowerCase();
+  const cleanedFullName = fullName?.trim();
+  const cleanedMobile = mobileNumber?.trim();
+
+  let googleUser = await User.findOne({ email: cleanedEmail });
+
+  if (googleUser) {
+    // User exists → just login (SignIn flow)
+    const token = genToken(googleUser._id);
+    res.cookie('token', token, {
+      secure: false,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+    });
+    return res.status(StatusCodes.OK).json({
+      _id: googleUser._id,
+      fullName: googleUser.fullName,
+      email: googleUser.email,
+      mobileNumber: googleUser.mobileNumber,
+      role: googleUser.role,
+      message: 'Login successful!',
+    });
+  }
+
+  // User doesn't exist → register (SignUp flow)
+  // mobile number required only for new user
+  if (!cleanedMobile) {
+    throw new ExpressError(StatusCodes.BAD_REQUEST, 'Mobile number is required');
+  }
+
+  const mobileExists = await User.findOne({ mobileNumber: cleanedMobile });
+  if (mobileExists) {
+    throw new ExpressError(StatusCodes.CONFLICT, 'Mobile number already exists');
+  }
+
+  googleUser = new User({
+    fullName: cleanedFullName,
+    email: cleanedEmail,
+    role,
+    mobileNumber: cleanedMobile,
+  });
+  await googleUser.save();
+
+  const token = genToken(googleUser._id);
+  res.cookie('token', token, {
+    secure: false,
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+  });
+
+  return res.status(StatusCodes.CREATED).json({
+    _id: googleUser._id,
+    fullName: googleUser.fullName,
+    email: googleUser.email,
+    mobileNumber: googleUser.mobileNumber,
+    role: googleUser.role,
+    message: 'User created successfully!',
+  });
+};
+
 export {
   registerUser,
   loginUser,
@@ -160,4 +225,5 @@ export {
   sendPasswordResetOtp,
   verifyPasswordResetOtp,
   resetUserPassword,
+  googleAuth,
 };

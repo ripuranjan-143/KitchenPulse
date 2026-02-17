@@ -4,8 +4,10 @@ import { FcGoogle } from 'react-icons/fc';
 import { ClipLoader } from 'react-spinners';
 import { FaRegEye } from 'react-icons/fa';
 import { FaRegEyeSlash } from 'react-icons/fa';
-import { registerUserAPI } from '../../services/authService.js';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { registerUserAPI, googleAuthAPI } from '../../services/authService.js';
 import showToast from '../../utils/toastHelper.js';
+import { auth } from '../../config/firebase.js';
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -66,6 +68,39 @@ function SignUp() {
     }
   };
 
+  const handleGoogleAuthentication = async (e) => {
+    const mobile = mobileNumber.trim();
+    if (!mobile) {
+      showToast('Please enter your mobile number', 'error');
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(mobile)) {
+      showToast('Mobile number must be exactly 10 digits', 'error');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = {
+        fullName: result.user.displayName,
+        email: result.user.email,
+        mobileNumber,
+        role,
+      };
+      const data = await googleAuthAPI(user);
+      showToast(data.message, 'success');
+      console.log(data);
+      setMobileNumber('');
+      setRole('user');
+    } catch (error) {
+      showToast(error, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen w-full flex justify-center items-center p-4 pb-6 bg-[#fff9f6]">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-8 border border-gray-300">
@@ -89,7 +124,6 @@ function SignUp() {
               placeholder="Enter your Full Name"
               onChange={(e) => setFullName(e.target.value)}
               value={fullName}
-              required
             />
           </div>
 
@@ -106,7 +140,6 @@ function SignUp() {
               autoComplete="off"
               onChange={(e) => setEmail(e.target.value)}
               value={email}
-              required
             />
           </div>
 
@@ -123,7 +156,6 @@ function SignUp() {
               placeholder="Enter your Mobile Number"
               onChange={(e) => setMobileNumber(e.target.value)}
               value={mobileNumber}
-              required
             />
           </div>
 
@@ -140,7 +172,6 @@ function SignUp() {
                 placeholder="Enter your password"
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
-                required
               />
 
               <button
@@ -180,6 +211,7 @@ function SignUp() {
           </button>
         </form>
         <button
+          onClick={handleGoogleAuthentication}
           type="button"
           className="w-full mt-4 flex items-center justify-center gap-2 border rounded-lg px-4 py-2 transition cursor-pointer duration-200 border-gray-400 hover:bg-gray-100"
         >
