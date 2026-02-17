@@ -3,9 +3,9 @@ import jwt from 'jsonwebtoken';
 import Config from '../config/index.js';
 
 // hash the password using bcrypt with generated salt
-const hashPassword = async (password) => {
+const hashValue = async (plainValue) => {
   const salt = await bcryptjs.genSalt(10);
-  return bcryptjs.hash(password, salt);
+  return bcryptjs.hash(plainValue, salt);
 };
 
 // generate JWT authentication token
@@ -15,8 +15,8 @@ const genToken = (id) => {
   });
 };
 
-const comparePassword = (enteredPassword, storedPassword) => {
-  return bcryptjs.compare(enteredPassword, storedPassword);
+const compareHash = (plainValue, hashedValue) => {
+  return bcryptjs.compare(plainValue, hashedValue);
 };
 
-export { hashPassword, genToken, comparePassword };
+export { hashValue, genToken, compareHash };

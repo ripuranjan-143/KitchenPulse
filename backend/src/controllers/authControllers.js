@@ -1,7 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
-import { genToken, hashPassword, comparePassword } from '../utils/authHelper.js';
+import { genToken, hashValue, compareHash } from '../utils/authHelper.js';
 import { ExpressError } from '../utils/ExpressError.js';
 import User from '../models/userModel.js';
+import { sendPasswordResetOtpEmail } from '../utils/emailService.js';
 
 // register
 const registerUser = async (req, res) => {
@@ -9,20 +10,22 @@ const registerUser = async (req, res) => {
   const cleanedEmail = email.trim().toLowerCase();
   const cleanedFullName = fullName.trim();
   const cleanedMobile = mobileNumber.trim();
-  // check if email already exists
-  const existingUser = await User.findOne({ email: cleanedEmail });
+  // check if email/mobile number already exists
+  const existingUser = await User.findOne({
+    $or: [{ email: cleanedEmail }, { mobileNumber: cleanedMobile }],
+  });
+
   if (existingUser) {
-    throw new ExpressError(StatusCodes.CONFLICT, 'Email is already used, try different email!');
-  }
-  const existingMobile = await User.findOne({ mobileNumber: cleanedMobile });
-  if (existingMobile) {
-    throw new ExpressError(
-      StatusCodes.CONFLICT,
-      'Mobile number is already used, try different number!'
-    );
+    if (existingUser.email === cleanedEmail) {
+      throw new ExpressError(StatusCodes.CONFLICT, 'Email already exists');
+    }
+
+    if (existingUser.mobileNumber === cleanedMobile) {
+      throw new ExpressError(StatusCodes.CONFLICT, 'Mobile Number already exists');
+    }
   }
 
-  const hashedPassword = await hashPassword(password);
+  const hashedPassword = await hashValue(password);
   // create new user
   const newUser = new User({
     fullName: cleanedFullName,
@@ -62,7 +65,7 @@ const loginUser = async (req, res) => {
     throw new ExpressError(StatusCodes.UNAUTHORIZED, 'Invalid email or password!');
   }
   // match password
-  const isMatched = await comparePassword(password, existingUser.password);
+  const isMatched = await compareHash(password, existingUser.password);
   if (!isMatched) {
     throw new ExpressError(StatusCodes.UNAUTHORIZED, 'Invalid email or password!');
   }
@@ -91,4 +94,70 @@ const logoutUser = async (req, res) => {
   return res.status(StatusCodes.OK).json({ message: 'Logout successfull!' });
 };
 
-export { registerUser, loginUser, logoutUser };
+// otp for reset password
+const sendPasswordResetOtp = async (req, res) => {
+  const { email } = req.body;
+  const existingUser = await User.findOne({ email: email.toLowerCase() });
+  if (!existingUser) {
+    throw new ExpressError(StatusCodes.UNAUTHORIZED, 'Invalid email or password!');
+  }
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  existingUser.passwordResetOtp = await hashValue(otp);
+  existingUser.resetOtpExpires = Date.now() + 5 * 60 * 1000;
+  existingUser.isResetOtpVerified = false;
+  await existingUser.save();
+  await sendPasswordResetOtpEmail(email, otp);
+  return res.status(StatusCodes.OK).json({ message: 'OTP sent successfully!' });
+};
+
+// verify otp for reset password
+const verifyPasswordResetOtp = async (req, res) => {
+  const { email, otp } = req.body;
+  const existingUser = await User.findOne({ email: email.toLowerCase() });
+  if (!existingUser) {
+    throw new ExpressError(StatusCodes.UNAUTHORIZED, 'Invalid email or password!');
+  }
+  if (!existingUser.passwordResetOtp || existingUser.resetOtpExpires < Date.now()) {
+    throw new ExpressError(
+      StatusCodes.BAD_REQUEST,
+      !existingUser.passwordResetOtp ? 'No OTP found. Please request a new OTP.' : 'OTP has expired'
+    );
+  }
+  const isMatchedOtp = await compareHash(otp, existingUser.passwordResetOtp);
+  if (!isMatchedOtp) {
+    throw new ExpressError(StatusCodes.BAD_REQUEST, 'Invalid OTP');
+  }
+  existingUser.isResetOtpVerified = true;
+  existingUser.passwordResetOtp = undefined;
+  existingUser.resetOtpExpires = undefined;
+  await existingUser.save();
+  return res.status(StatusCodes.OK).json({ message: 'OTP verified successfully!' });
+};
+
+// reset password
+const resetUserPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+  const existingUser = await User.findOne({ email: email.toLowerCase() });
+  if (!existingUser) {
+    throw new ExpressError(StatusCodes.UNAUTHORIZED, 'Invalid email or password!');
+  }
+  if (!existingUser.isResetOtpVerified) {
+    throw new ExpressError(StatusCodes.UNAUTHORIZED, 'Please verify OTP first!');
+  }
+  const hashedPassword = await hashValue(newPassword);
+  existingUser.password = hashedPassword;
+  existingUser.isResetOtpVerified = false;
+  existingUser.passwordResetOtp = undefined;
+  existingUser.resetOtpExpires = undefined;
+  await existingUser.save();
+  return res.status(StatusCodes.OK).json({ message: 'Password reset successfully!' });
+};
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  sendPasswordResetOtp,
+  verifyPasswordResetOtp,
+  resetUserPassword,
+};

@@ -4,7 +4,7 @@ import { FcGoogle } from 'react-icons/fc';
 import { ClipLoader } from 'react-spinners';
 import { FaRegEye } from 'react-icons/fa';
 import { FaRegEyeSlash } from 'react-icons/fa';
-import { signupUser } from '../../services/authService';
+import { registerUserAPI } from '../../services/authService.js';
 import showToast from '../../utils/toastHelper.js';
 
 function SignUp() {
@@ -51,7 +51,7 @@ function SignUp() {
     try {
       setLoading(true);
       const user = { fullName, email, password, mobileNumber, role };
-      const data = await signupUser(user);
+      const data = await registerUserAPI(user);
       showToast('Account created successfully!', 'success');
       console.log(data);
       setFullName('');

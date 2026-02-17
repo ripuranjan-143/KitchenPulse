@@ -5,7 +5,7 @@ import { ClipLoader } from 'react-spinners';
 import { FaRegEye } from 'react-icons/fa';
 import { FaRegEyeSlash } from 'react-icons/fa';
 import showToast from '../../utils/toastHelper';
-import { signinUser } from '../../services/authService.js';
+import { loginUserAPI } from '../../services/authService.js';
 
 function SignIn() {
   const [email, setEmail] = useState('');
@@ -37,7 +37,7 @@ function SignIn() {
     try {
       setLoading(true);
       const user = { email, password };
-      const data = await signinUser(user);
+      const data = await loginUserAPI(user);
       showToast('Login successful!', 'success');
       console.log(data);
       setEmail('');
@@ -102,6 +102,15 @@ function SignIn() {
                   className="absolute right-3 cursor-pointer top-3.5 text-gray-500"
                 >
                   {!showPassword ? <FaRegEye /> : <FaRegEyeSlash />}
+                </button>
+              </div>
+              <div className="flex justify-end ">
+                <button
+                  onClick={() => navigate('/forgot-password')}
+                  type="button"
+                  className="cursor-pointer me-1 hover:underline"
+                >
+                  Forgot Password ?
                 </button>
               </div>
             </div>
