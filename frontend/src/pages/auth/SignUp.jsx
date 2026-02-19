@@ -4,10 +4,12 @@ import { FcGoogle } from 'react-icons/fc';
 import { ClipLoader } from 'react-spinners';
 import { FaRegEye } from 'react-icons/fa';
 import { FaRegEyeSlash } from 'react-icons/fa';
+import { useDispatch } from 'react-redux';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { registerUserAPI, googleAuthAPI } from '../../services/authService.js';
-import showToast from '../../utils/toastHelper.js';
 import { auth } from '../../config/firebase.js';
+import showToast from '../../utils/toastHelper.js';
+import { setUserData } from '../../redux/userSlice.js';
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,6 +21,7 @@ function SignUp() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const validateForm = () => {
     const name = fullName.trim();
@@ -55,7 +58,7 @@ function SignUp() {
       const user = { fullName, email, password, mobileNumber, role };
       const data = await registerUserAPI(user);
       showToast('Account created successfully!', 'success');
-      console.log(data);
+      dispatch(setUserData(data));
       setFullName('');
       setEmail('');
       setMobileNumber('');
@@ -91,7 +94,7 @@ function SignUp() {
       };
       const data = await googleAuthAPI(user);
       showToast(data.message, 'success');
-      console.log(data);
+      dispatch(setUserData(data));
       setMobileNumber('');
       setRole('user');
     } catch (error) {

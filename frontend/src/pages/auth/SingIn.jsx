@@ -4,10 +4,12 @@ import { FcGoogle } from 'react-icons/fc';
 import { ClipLoader } from 'react-spinners';
 import { FaRegEye } from 'react-icons/fa';
 import { FaRegEyeSlash } from 'react-icons/fa';
+import { useDispatch } from 'react-redux';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import showToast from '../../utils/toastHelper';
 import { loginUserAPI, googleAuthAPI } from '../../services/authService.js';
 import { auth } from '../../config/firebase.js';
+import showToast from '../../utils/toastHelper';
+import { setUserData } from '../../redux/userSlice.js';
 
 function SignIn() {
   const [email, setEmail] = useState('');
@@ -16,6 +18,7 @@ function SignIn() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const validateForm = () => {
     const mail = email.trim();
@@ -40,8 +43,8 @@ function SignIn() {
       setLoading(true);
       const user = { email, password };
       const data = await loginUserAPI(user);
+      dispatch(setUserData(data));
       showToast('Login successful!', 'success');
-      console.log(data);
       setEmail('');
       setPassword('');
     } catch (error) {
@@ -57,8 +60,8 @@ function SignIn() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const data = await googleAuthAPI({ email: result.user.email });
+      dispatch(setUserData(data));
       showToast(data.message, 'success');
-      console.log(data);
     } catch (error) {
       showToast(error, 'error');
     } finally {

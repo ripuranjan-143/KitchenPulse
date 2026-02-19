@@ -37,7 +37,7 @@ const resetUserPasswordAPI = async (payload) => {
 };
 
 const googleAuthAPI = async (user) => {
-  const { data } = await axiosInstance.post('/auth/google-register', user, {
+  const { data } = await axiosInstance.post('/auth/google-auth', user, {
     withCredentials: true,
   });
   return data;

@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IoIosArrowRoundBack } from 'react-icons/io';
 import { ClipLoader } from 'react-spinners';
-import showToast from '../../utils/toastHelper.js';
 import {
   sendPasswordResetOtpAPI,
   verifyPasswordResetOtpAPI,
   resetUserPasswordAPI,
 } from '../../services/authService.js';
+import showToast from '../../utils/toastHelper.js';
 
 function ForgotPassword() {
   const [loading, setLoading] = useState(false);
@@ -22,9 +22,8 @@ function ForgotPassword() {
   const handleSendOtp = async () => {
     try {
       setLoading(true);
-      const data = await sendPasswordResetOtpAPI({ email });
+      await sendPasswordResetOtpAPI({ email });
       showToast('OTP has been send to your registered Email!', 'info');
-      console.log(data);
       setStep(2);
     } catch (error) {
       showToast(error, 'error');
@@ -36,8 +35,7 @@ function ForgotPassword() {
   const handleVerifyOtp = async () => {
     try {
       setLoading(true);
-      const data = await verifyPasswordResetOtpAPI({ email, otp });
-      console.log(data);
+      await verifyPasswordResetOtpAPI({ email, otp });
       showToast('OTP verified successfully!', 'success');
       setStep(3);
     } catch (error) {
@@ -53,8 +51,7 @@ function ForgotPassword() {
     }
     try {
       setLoading(true);
-      const data = await resetUserPasswordAPI({ email, newPassword });
-      console.log(data);
+      await resetUserPasswordAPI({ email, newPassword });
       showToast('Password reset successful!', 'success');
       navigate('/signin');
       setConfirmPassword('');

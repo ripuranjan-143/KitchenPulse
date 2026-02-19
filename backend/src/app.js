@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { StatusCodes } from 'http-status-codes';
 import { ExpressError } from './utils/ExpressError.js';
 import { mainRouter } from './routes/mainRoutes.js';
@@ -17,6 +18,7 @@ app.use(
 
 // middleware to parse JSON request bodies
 app.use(express.json({ limit: '100kb' }));
+app.use(cookieParser());
 
 // routes
 app.use('/api/v1', mainRouter);
